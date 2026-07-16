@@ -1,8 +1,10 @@
-# LangChain FastAPI Projects
+# LangGraph + FastAPI Study Project
+
+A hands-on learning project exploring LangGraph implementation patterns with FastAPI servers. Each module demonstrates different LangGraph concepts: agents, memory, middleware, human-in-the-loop workflows, and breakpoints.
 
 ## Setup
 
-### 1. Create virtual environment with uv
+### 1. Create virtual environment
 ```bash
 uv venv
 ```
@@ -18,7 +20,7 @@ uv pip install -r requirements.txt
 ```
 
 ### 4. Configure environment variables
-Edit the `.env` file with your API keys:
+Create a `.env` file:
 ```
 OPENAI_API_KEY=your-key-here
 OPENAI_API_BASE=https://your-proxy-url/v1
@@ -27,174 +29,126 @@ DEFAULT_MODEL=your-model-name
 
 ---
 
-## Lesson 1: Message Manager API (app-m3-1.py)
+## Modules
 
-### Start the server
+### Module 1: Agent Memory with Tools
+**File:** `langGraph-agent-memory-00.py`
+
+Demonstrates persistent memory using `MemorySaver` and tool-calling agents with arithmetic operations.
+
 ```bash
-uv run python app-m3-1.py
+uv run python langGraph-agent-memory-00.py
 ```
 
-### Run the tests (in a separate terminal)
-```bash
-uv run python test-m3-1.py
-```
-
-### Endpoints
-- `POST /process` - Process messages with optional middleware
-- `POST /summarize` - Process with summarization middleware
-- `POST /trim` - Process with trimming middleware
+**Endpoint:** `POST /process`
 
 ---
 
-## Lesson 2: AI Engineering Assistant (app-m3-2.py)
+### Module 2: Message Management
+**Files:** `M2-LG-*.py`
 
-A conversational AI assistant that:
-- Specializes in AI engineering topics
-- Uses summarization to maintain context
-- Handles exit commands
-- Returns full conversation history
+Covers message manipulation techniques:
+- **DELETE Messages** - Removing messages from conversation state
+- **Trim Messages** - Trimming conversation history
+- **SQLite Memory** - Persistent memory with SQLite checkpointing
 
-### Start the server
+---
+
+### Module 3: Middleware & Conversational AI
+
+#### Lesson 1: Message Manager API
+**File:** `app-m3-1.py`
+
+Demonstrates middleware patterns with summarization and trimming.
+
+```bash
+uv run python app-m3-1.py
+uv run python test-m3-1.py  # tests
+```
+
+**Endpoints:**
+- `POST /process` - Process with optional middleware
+- `POST /summarize` - Summarization middleware
+- `POST /trim` - Trimming middleware
+
+#### Lesson 2: AI Engineering Assistant
+**File:** `app-m3-2.py`
+
+Conversational AI assistant with summarization for context management.
+
 ```bash
 uv run python app-m3-2.py
 ```
 
-### Using with Postman
+**Endpoint:** `POST /chat`
 
-**Start a conversation:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "Hi",
-  "thread_id": "user-123"
-}
-```
-
-**Ask an AI question:**
-```
-POST http://localhost:8000/chat
+```json
 {
   "message": "What is RAG?",
   "thread_id": "user-123"
 }
 ```
 
-**Ask an off-topic question:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "What's the weather today?",
-  "thread_id": "user-123"
-}
+#### Lesson 3: Multi-Summary Assistant
+**File:** `app-m3-3.py`
+
+Enhanced assistant with structured summaries stored per conversation.
+
+```bash
+uv run python app-m3-3.py
+uv run python test-m3-3.py  # tests
 ```
 
-**End the conversation:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "exit",
-  "thread_id": "user-123"
-}
-```
-
-### Response Format
-```json
-{
-  "response": "AI response with [Summary: ...] appended",
-  "thread_id": "user-123",
-  "conversation_history": [...],
-  "conversation_ended": false
-}
-```
+**Endpoints:**
+- `POST /chat` - Chat with summary generation
+- `GET /summaries/{thread_id}` - Retrieve summaries
 
 ---
 
-## Lesson 3: AI Engineering Assistant with Multi-Summary (app-m3-3.py)
+### Module 4: Human-in-the-Loop (HITL)
+**File:** `app-HITH-00.py`
 
-Enhanced conversational AI assistant that:
-- Creates structured summaries after each message
-- Stores up to 10 summaries in conversation history
-- Injects summaries into system prompt for context
-- Provides dedicated endpoint to retrieve summaries
-- Skips summary generation on "exit"
+Guitar store customer support with manager approval workflow for sensitive actions (store credit issuance).
 
-### Start the server
 ```bash
-uv run python app-m3-3.py
+uv run python app-HITH-00.py
+uv run python test-HITL-00.py  # tests
 ```
 
-### Using with Postman
+**Endpoints:**
+- `POST /chat` - Customer chat (auto-interrupts on credit actions)
+- `POST /manager/decision` - Manager approves/rejects/edits
 
-**Start a conversation:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "Hi, I need help with AI engineering",
-  "thread_id": "user-456"
-}
-```
+**Flow:**
+1. Customer reports issue → Agent checks order
+2. Agent calculates credit → Interrupts for approval
+3. Manager decides via `/manager/decision`
+4. Agent completes or adjusts response
 
-**Ask questions:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "What is RAG?",
-  "thread_id": "user-456"
-}
-```
+---
 
-**Retrieve summaries:**
-```
-GET http://localhost:8000/summaries/user-456
-```
+### Module 5: Breakpoints
+**Files:** `M3-LG-breakingPoints*.py`
 
-**End conversation:**
-```
-POST http://localhost:8000/chat
-{
-  "message": "exit",
-  "thread_id": "user-456"
-}
-```
+Demonstrates LangGraph breakpoint patterns for pausing and resuming graph execution.
 
-### Response Formats
+---
 
-**Chat Response:**
-```json
-{
-  "response": "AI response (no summary included)",
-  "thread_id": "user-456",
-  "conversation_history": [...],
-  "conversation_ended": false
-}
-```
+## Key Concepts Covered
 
-**Summaries Response:**
-```json
-{
-  "thread_id": "user-456",
-  "summaries": [
-    {
-      "topic": "RAG systems",
-      "question": "What is RAG?",
-      "answer": "RAG combines retrieval with generation..."
-    }
-  ],
-  "count": 1
-}
-```
-
-### Run automated tests
-```bash
-uv run python test-m3-3.py
-```
+- **StateGraph** - Building custom graph workflows
+- **Checkpointers** - Memory persistence (InMemorySaver, SQLite)
+- **Middleware** - Before/after agent hooks (summarization, trimming)
+- **Tool Calling** - Binding tools to LLMs
+- **Human-in-the-Loop** - Interrupts and resume patterns
+- **Thread Management** - Conversation isolation via `thread_id`
+- **Breakpoints** - Pausing graph execution at specific nodes
 
 ---
 
 ## Notes
 
 - Each app runs on port 8000 (stop one before starting another)
-- Each conversation uses a unique `thread_id` for isolation
+- Use unique `thread_id` values for conversation isolation
+- Checkpointers must be instantiated at module level (not inside request handlers) to persist across requests
 - The `DEFAULT_MODEL` from `.env` is used for all LLM calls
-- Lesson 3 maintains up to 10 structured summaries per conversation
-- **Important:** The `checkpointer` is instantiated at module level (not inside factory functions) to ensure conversation state persists across HTTP requests
